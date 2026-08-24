@@ -1,41 +1,77 @@
-# Lab 23 — Kill region của chính mình trước, rồi mới học cách sống sót
+# Day 23 — Disaster Recovery & High Availability for AI Infrastructure
 
-Đây là lab thực hành 2 giờ về Disaster Recovery và High Availability cho hạ tầng AI. Bạn sẽ dựng hai FastAPI process đóng vai hai region, tạo traffic liên tục, làm hỏng region chính rồi đo RTO/RPO từ timestamp trong log. Con số trên slide chỉ là mục tiêu; con số được chấp nhận trong lab phải truy ngược được về request và sự kiện thật.
+**Lab format:** 2 hours · **Environment:** fully local, no cloud account required · **Core idea:** kill your own region first, then learn to survive it.
 
-## Chạy nhanh: bare mode
+> RTO/RPO are numbers you *measure* from logs — not numbers you read off a slide.
 
-Bare mode là đường mặc định của lớp, không cần Docker hay tài khoản cloud.
+---
+
+## Overview
+
+This lab simulates a two-region AI serving deployment entirely on your own machine:
+
+| Component | Real-world equivalent | Local stand-in |
+|---|---|---|
+| Region A / Region B | AWS us-east-1 / us-west-2 | Two FastAPI processes on different ports |
+| Vector DB | Pinecone / Weaviate / Qdrant | SQLite file per region |
+| Model weight replication | S3 Cross-Region Replication | Filesystem snapshot (`state/_replica/`) |
+| DNS / Global Load Balancer | Route53 health-check failover | A local proxy reading a `edge/active_region` pointer file |
+| Region outage | Network partition / AZ failure | `chaos/kill_region.py` (`SIGSTOP` or `SIGKILL`) |
+
+You will bring the stack up, watch it serve traffic normally, **kill Region A while it is live**, and measure — with real timestamps, not intuition — how long it takes users to notice and how long it takes to recover. Then you build the health check, failover, and runbook automation that turns "no recovery" into a measured, passing RTO.
+
+No AWS account, no cloud spend, no Docker required for the graded path.
+
+## Quick Start
 
 ```bash
 pip install -r requirements.txt
-make seed
+make seed              # seed Region A (200 docs + weights), Region B empty
 bash scripts/up_bare.sh
 curl localhost:8080/v1/infer
 ```
 
-Kết quả ban đầu phải có `"edge_region":"a"` và câu trả lời bắt đầu bằng `"[a]"`. Dừng stack bằng:
+Expected response: `"edge_region":"a"` and an answer starting with `"[a] ..."`.
+
+Stop everything:
 
 ```bash
 bash scripts/down_bare.sh
 ```
 
-Nếu máy đã có Docker Desktop đang chạy, có thể khởi động các service bằng `docker compose up -d`. Tuy nhiên, toàn bộ luồng drill và chấm điểm trong [GUIDE.md](GUIDE.md) dùng bare mode với `--mock` để kết quả không phụ thuộc tốc độ Docker hoặc mạng máy cá nhân.
+> **Docker mode** (optional, `docker compose up -d`) works for local exploration, but is **not** used for the graded drill — timing is not reproducible across machines. Every drill in [GUIDE.md](GUIDE.md) runs in bare mode with `--mock`.
 
-## Cấu trúc repo
+## Repository Structure
 
-- `serving/`: inference API cho từng region; readiness phụ thuộc pool, model weights và vector DB.
-- `edge/`: proxy đóng vai DNS/LB; `edge/active_region` là record đang được cache theo TTL.
-- `state/`: seed, ingest, snapshot/restore và replication cho SQLite cùng model weights giả lập.
-- `chaos/kill_region.py`: tạo lỗi `stop` hoặc `netblock`, ghi sự kiện chaos.
-- `loadgen/traffic.py`: phát traffic và ghi một dòng JSONL cho mỗi request; đây là đồng hồ RTO.
-- `dr/`: ba skeleton `health_checker.py`, `failover.py`, `runbook.py` mà sinh viên phải hoàn thiện.
-- `tools/measure_rto.py`: tính RTO/RPO từ log, đồng thời kiểm tra drill có hợp lệ hay không.
-- `tests/`: unit test cho phần DR và gate kiểm chứng evidence.
-- `reports/`: template runbook, evidence, postmortem và các log sinh ra khi chạy drill.
-- `scripts/`: bật/tắt stack bare mode; `docker-compose.yml` và hai Dockerfile phục vụ Docker mode.
+```
+serving/    Mock inference API per region (FastAPI). Readiness depends on pool state,
+            model weights on disk, and vector count — not just "process is alive".
+edge/       DNS/load-balancer stand-in. Routes by reading edge/active_region,
+            cached for EDGE_TTL_SECONDS to simulate real DNS cache behavior.
+state/      Seed, ingest, snapshot/restore, and replication for the vector DB
+            and model weights.
+chaos/      kill_region.py — induces `stop` (SIGKILL) or `netblock` (SIGSTOP)
+            failure, with a --mock flag for reproducible grading.
+loadgen/    traffic.py — continuous request generator. This is the RTO clock:
+            every request is one timestamped line in a JSONL log.
+dr/         ★ YOUR ASSIGNMENT — three skeletons to implement:
+            health_checker.py, failover.py, runbook.py
+tools/      measure_rto.py — computes RTO/RPO from logs and validates the drill.
+tests/      Unit tests for your dr/ code, plus the evidence-gate tests used
+            for grading.
+reports/    Templates you fill in: runbook.md, rto-evidence.md, postmortem.md.
+scripts/    up_bare.sh / down_bare.sh — start/stop the stack without Docker.
+```
 
-Làm lab theo [GUIDE.md](GUIDE.md). Cách chấm và điều kiện trượt nằm trong [RUBRIC.md](RUBRIC.md).
+## Where to Go Next
 
-## Nội quy an toàn
+| Document | Purpose |
+|---|---|
+| **[GUIDE.md](GUIDE.md)** | Full 2-hour walkthrough — setup, baseline, attack, containment, proof |
+| **[RUBRIC.md](RUBRIC.md)** | Grading criteria, hard-fail conditions, and exact verification commands |
 
-Chỉ tấn công stack local của chính bạn và chỉ dùng các endpoint `127.0.0.1`/`localhost` đã có trong repo; không đổi `URL`, `UPSTREAM` hoặc load-generator để trỏ sang máy khác. `--mock` chỉ dùng process signal và file local, backend `fs` chỉ dùng đĩa local; lab này không gọi hay phá bất kỳ cloud region thật nào.
+## Safety Notes
+
+- Every target in this lab is `127.0.0.1` / `localhost`. Do not repoint `URL`, `UPSTREAM`, or the load generator at any external host.
+- `--mock` mode only sends process signals (`SIGSTOP`/`SIGKILL`) and touches local files — nothing here reaches a real cloud region.
+- The chaos script refuses to kill a region if the other one is already down, to prevent an accidental double outage. Overriding this (`--i-really-want-both`) marks the drill invalid for grading.
