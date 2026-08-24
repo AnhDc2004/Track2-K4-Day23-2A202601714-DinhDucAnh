@@ -1,0 +1,22 @@
+# Trang thai sinh ra luc chay lab (khong commit vao repo)
+state/region-a/
+state/region-b/
+state/_replica/
+edge/active_region
+run/*
+!run/.gitkeep
+
+# Log/evidence sinh vien tu tao trong luc chay drill
+reports/*.jsonl
+reports/*.json
+chaos/chaos-events.jsonl
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# OS
+.DS_Store

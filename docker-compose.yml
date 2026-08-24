@@ -1,0 +1,36 @@
+# Docker mode — dùng khi máy có Docker Desktop. Bare mode (scripts/up_bare.sh) là
+# đường mặc định cho lớp không có Docker sẵn.
+services:
+  serving-a:
+    build: { context: ., dockerfile: serving/Dockerfile }
+    environment: [REGION=a, STATE_DIR=/state, WARMUP_SECONDS=6]
+    volumes: ["./state/region-a:/state"]
+    ports: ["8001:8000"]
+    cap_add: [NET_ADMIN]   # cần cho chaos --mode netblock (iptables trong container)
+
+  serving-b:
+    build: { context: ., dockerfile: serving/Dockerfile }
+    environment: [REGION=b, STATE_DIR=/state, WARMUP_SECONDS=6]
+    volumes: ["./state/region-b:/state"]
+    ports: ["8002:8000"]
+    cap_add: [NET_ADMIN]
+
+  edge:
+    build: { context: ., dockerfile: edge/Dockerfile }
+    environment:
+      - REGION_A_URL=http://serving-a:8000
+      - REGION_B_URL=http://serving-b:8000
+      - EDGE_TTL_SECONDS=5
+    volumes: ["./edge:/app/edge"]
+    ports: ["8080:8000"]
+    depends_on: [serving-a, serving-b]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment: [MINIO_ROOT_USER=minioadmin, MINIO_ROOT_PASSWORD=minioadmin]
+    ports: ["9000:9000", "9001:9001"]
+    volumes: ["minio-data:/data"]
+
+volumes:
+  minio-data:
