@@ -15,3 +15,4 @@ venv/
 
 # OS
 .DS_Store
+reports/_test-health.jsonl
