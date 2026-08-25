@@ -1,0 +1,20 @@
+{"ts": 1787651403.602436, "iso": "2026-08-25T16:50:03", "step": "1_verify_target", "region": "b", "pool_state": "warm", "weights": false, "count": 0, "error": null}
+{"ts": 1787651403.6049683, "iso": "2026-08-25T16:50:03", "step": "2_restore_snapshot", "ok": true, "region": "b", "rpo_seconds": 10.0, "docs_lost": 5, "embed_model_version": "embed-model=vi-e5-base@v3", "snapshot_at": 1787651395.2825756, "snapshot_latest_doc_ts": 1787651393.2827485, "primary_latest_doc_ts": 1787651403.2839422, "restored_latest_doc_ts": 1787651393.2827485}
+{"ts": 1787651403.6052423, "iso": "2026-08-25T16:50:03", "step": "3_scale_pool", "region": "b", "from": "warm", "to": "full"}
+{"ts": 1787651409.826686, "iso": "2026-08-25T16:50:09", "step": "4_wait_ready", "region": "b", "ready": true, "waited_s": 6.22, "last_reason": ["warming_up_0.3s_left"], "pool_state": "full", "vectors": {"count": 215, "latest_doc_ts": 1787651393.2827485}}
+{"ts": 1787651409.827039, "iso": "2026-08-25T16:50:09", "step": "5_dns_cutover", "from": "a", "to": "b"}
+{"ts": 1787652286.5750418, "iso": "2026-08-25T17:04:46", "step": "1_verify_target", "region": "b", "pool_state": "warm", "weights": null, "count": null, "error": null}
+{"ts": 1787652286.5762846, "iso": "2026-08-25T17:04:46", "step": "2_restore_snapshot", "ok": true, "region": "b", "rpo_seconds": 120.01, "docs_lost": 60, "embed_model_version": "test", "snapshot_at": 1787652286.575192, "snapshot_latest_doc_ts": 1787652286.5751922, "primary_latest_doc_ts": 1787651513.2892313, "restored_latest_doc_ts": 1787651393.2827485}
+{"ts": 1787652286.576951, "iso": "2026-08-25T17:04:46", "step": "3_scale_pool", "region": "b", "from": "full", "to": "full"}
+{"ts": 1787652287.577769, "iso": "2026-08-25T17:04:47", "step": "4_wait_ready", "region": "b", "ready": false, "waited_s": 1.0, "last_reason": "ConnectError", "pool_state": null, "vectors": null}
+{"ts": 1787652287.5779505, "iso": "2026-08-25T17:04:47", "step": "abort", "reason": "target b not ready after 1.0s -> KHONG cutover", "active_region_unchanged": true}
+{"ts": 1787652307.1153226, "iso": "2026-08-25T17:05:07", "step": "1_verify_target", "region": "b", "pool_state": "warm", "weights": null, "count": null, "error": null}
+{"ts": 1787652307.1162875, "iso": "2026-08-25T17:05:07", "step": "2_restore_snapshot", "ok": true, "region": "b", "rpo_seconds": 120.01, "docs_lost": 60, "embed_model_version": "test", "snapshot_at": 1787652307.1154854, "snapshot_latest_doc_ts": 1787652307.1154857, "primary_latest_doc_ts": 1787651513.2892313, "restored_latest_doc_ts": 1787651393.2827485}
+{"ts": 1787652307.116655, "iso": "2026-08-25T17:05:07", "step": "3_scale_pool", "region": "b", "from": "full", "to": "full"}
+{"ts": 1787652308.1174462, "iso": "2026-08-25T17:05:08", "step": "4_wait_ready", "region": "b", "ready": false, "waited_s": 1.0, "last_reason": "ConnectError", "pool_state": null, "vectors": null}
+{"ts": 1787652308.1177018, "iso": "2026-08-25T17:05:08", "step": "abort", "reason": "target b not ready after 1.0s -> KHONG cutover", "active_region_unchanged": true}
+{"ts": 1787652338.6674325, "iso": "2026-08-25T17:05:38", "step": "1_verify_target", "region": "b", "pool_state": "warm", "weights": null, "count": null, "error": null}
+{"ts": 1787652338.6681614, "iso": "2026-08-25T17:05:38", "step": "2_restore_snapshot", "ok": true, "region": "b", "rpo_seconds": 120.01, "docs_lost": 60, "embed_model_version": "test", "snapshot_at": 1787652338.6675644, "snapshot_latest_doc_ts": 1787652338.6675646, "primary_latest_doc_ts": 1787651513.2892313, "restored_latest_doc_ts": 1787651393.2827485}
+{"ts": 1787652338.6684613, "iso": "2026-08-25T17:05:38", "step": "3_scale_pool", "region": "b", "from": "full", "to": "full"}
+{"ts": 1787652339.6692588, "iso": "2026-08-25T17:05:39", "step": "4_wait_ready", "region": "b", "ready": false, "waited_s": 1.0, "last_reason": "ConnectError", "pool_state": null, "vectors": null}
+{"ts": 1787652339.6697862, "iso": "2026-08-25T17:05:39", "step": "abort", "reason": "target b not ready after 1.0s -> KHONG cutover", "active_region_unchanged": true}

@@ -1,0 +1,5 @@
+{"ts": 1787651370.3159335, "iso": "2026-08-25T16:49:30", "event": "start", "interval_s": 5.0, "threshold": 3, "timeout_s": 2.0, "detect_floor_s": 15.0}
+{"ts": 1787651380.3464637, "iso": "2026-08-25T16:49:40", "event": "state_change", "region": "b", "to": "UNHEALTHY", "reason": "readyz_503:['pool_state=warm', 'model_weights_missing', 'vector_db_empty(count=0)']", "consecutive_fails": 3, "interval_s": 5.0, "threshold": 3}
+{"ts": 1787651397.3298695, "iso": "2026-08-25T16:49:57", "event": "state_change", "region": "a", "to": "UNHEALTHY", "reason": "timeout_after_2.0s", "consecutive_fails": 3, "interval_s": 5.0, "threshold": 3}
+{"ts": 1787651412.3484516, "iso": "2026-08-25T16:50:12", "event": "state_change", "region": "b", "to": "HEALTHY", "reason": "readyz_200", "consecutive_fails": 8, "interval_s": 5.0, "threshold": 3}
+{"ts": 1787651470.3179047, "iso": "2026-08-25T16:51:10", "event": "stop", "final_state": {"a": "UNHEALTHY", "b": "HEALTHY"}}

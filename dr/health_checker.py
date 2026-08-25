@@ -30,12 +30,60 @@ URL = {"a": "http://127.0.0.1:8001", "b": "http://127.0.0.1:8002"}
 
 def probe(region: str, timeout: float) -> tuple[bool, str]:
     """TODO: trả về (ready, reason). Timeout PHẢI có — netblock làm request treo mãi."""
-    raise NotImplementedError
+    try:
+        r = httpx.get(f"{URL[region]}/readyz", timeout=timeout)
+        if r.status_code == 200:
+            return True, "readyz_200"
+        try:
+            reasons = r.json().get("reasons") or r.json().get("reason") or r.text
+        except Exception:
+            reasons = r.text
+        return False, f"readyz_{r.status_code}:{reasons}"
+    except httpx.TimeoutException:
+        return False, f"timeout_after_{timeout}s"
+    except httpx.HTTPError as e:
+        return False, f"conn_error:{type(e).__name__}"
+
+
+def _emit(out: pathlib.Path, **kw):
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rec = {"ts": time.time()}
+    rec["iso"] = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(rec["ts"]))
+    rec.update(kw)
+    with out.open("a") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    print("HEALTH", json.dumps(rec, ensure_ascii=False), flush=True)
 
 
 def run(interval: float, timeout: float, threshold: int, duration: float, out: pathlib.Path):
     """TODO: vòng lặp poll + phát hiện transition + ghi JSONL."""
-    raise NotImplementedError
+    state = {r: "HEALTHY" for r in URL}
+    fails = {r: 0 for r in URL}
+    _emit(out, event="start", interval_s=interval, threshold=threshold,
+          timeout_s=timeout, detect_floor_s=interval * threshold)
+
+    t_end = time.time() + duration
+    while time.time() < t_end:
+        t_cycle = time.time()
+        for region in URL:
+            ready, reason = probe(region, timeout)
+            if ready:
+                if state[region] == "UNHEALTHY":
+                    state[region] = "HEALTHY"
+                    _emit(out, event="state_change", region=region, to="HEALTHY",
+                          reason=reason, consecutive_fails=fails[region],
+                          interval_s=interval, threshold=threshold)
+                fails[region] = 0
+            else:
+                fails[region] += 1
+                if fails[region] >= threshold and state[region] == "HEALTHY":
+                    state[region] = "UNHEALTHY"
+                    _emit(out, event="state_change", region=region, to="UNHEALTHY",
+                          reason=reason, consecutive_fails=fails[region],
+                          interval_s=interval, threshold=threshold)
+        time.sleep(max(0.0, interval - (time.time() - t_cycle)))
+
+    _emit(out, event="stop", final_state=state)
 
 
 if __name__ == "__main__":

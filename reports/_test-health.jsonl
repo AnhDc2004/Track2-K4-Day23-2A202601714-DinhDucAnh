@@ -1,0 +1,4 @@
+{"ts": 1787652338.4604042, "iso": "2026-08-25T17:05:38", "event": "start", "interval_s": 0.01, "threshold": 3, "timeout_s": 0.01, "detect_floor_s": 0.03}
+{"ts": 1787652338.4913578, "iso": "2026-08-25T17:05:38", "event": "state_change", "region": "a", "to": "UNHEALTHY", "reason": "mock", "consecutive_fails": 3, "interval_s": 0.01, "threshold": 3}
+{"ts": 1787652338.5015142, "iso": "2026-08-25T17:05:38", "event": "state_change", "region": "b", "to": "UNHEALTHY", "reason": "mock", "consecutive_fails": 3, "interval_s": 0.01, "threshold": 3}
+{"ts": 1787652338.665346, "iso": "2026-08-25T17:05:38", "event": "stop", "final_state": {"a": "UNHEALTHY", "b": "UNHEALTHY"}}
